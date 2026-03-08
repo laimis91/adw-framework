@@ -59,6 +59,7 @@ Assess the size and tell me which phases to run.
 
 ```
 ├── README.md                              ← You are here
+├── ROADMAP.md                             ← Feature roadmap and priorities
 ├── ai-dev-workflow-framework.md           ← Full framework documentation
 ├── playbooks-reference.md                 ← Project-type playbooks (standalone reference)
 │
@@ -177,7 +178,15 @@ Total: 1,157 lines — but only 213 are always in the AI's context. The rest loa
 
 ## Contributing
 
-This is a living framework. If you find gaps, have suggestions for new playbooks, or want to improve the prompts:
+This is a living framework. See [ROADMAP.md](ROADMAP.md) for planned features and priorities.
+
+Current milestones:
+1. **Prompt Packs** — threat model, PR review, refactor safety, test strategy, migration, release notes
+2. **Multi-Agent Automation** — decompose script, agent runner, integration checker, AGENTS.md generator
+3. **Production Hardening** — GitHub Actions templates, pre-commit hooks, SBOM/security scanning guides
+4. **More Playbooks** — Blazor Server, React/Next.js, Python FastAPI, Docker
+
+If you find gaps, have suggestions, or want to contribute:
 
 1. Open an issue describing the problem or improvement
 2. Reference which phase, template, or playbook is affected
