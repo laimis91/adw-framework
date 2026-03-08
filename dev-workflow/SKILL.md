@@ -1,5 +1,5 @@
 ---
-name: ai-dev-workflow-framework
+name: dev-workflow
 description: "Structured AI-assisted development workflow: triage, discover, plan, design, build, test, document. Use this skill whenever the user asks to build, implement, add, fix, refactor, or create anything in a codebase — whether it's a new feature, bugfix, refactor, new project, UI component, API endpoint, or multi-module change. Also use when the user asks for a plan, implementation approach, architecture review, task breakdown, or wants to start working on something. Triggers on: 'build', 'implement', 'add feature', 'fix bug', 'refactor', 'create project', 'plan this', 'how should I approach', 'break this down', 'start working on', or any request that involves changing code. Always use this skill before writing code — it prevents guessing, scope creep, and wasted work."
 ---
 
