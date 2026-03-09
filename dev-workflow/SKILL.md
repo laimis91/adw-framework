@@ -91,6 +91,11 @@ For small tasks, use a lightweight inline plan: what files change, risks, what t
 5. Write ordered implementation steps with file paths and test commands
 6. For medium+ tasks: fill in Security and Operability sections from plan template
 7. Read `references/ai-usage-policy.md` and follow its rules throughout
+8. Load prompt packs when applicable:
+   - Security (auth, PII, payments, external inputs): read `references/prompts/threat-model.md`
+   - Refactors: read `references/prompts/refactor-safety.md`
+   - New code paths: read `references/prompts/test-strategy.md`
+   - DB or data changes: read `references/prompts/migration.md`
 
 ### Architecture quick reference (for new projects)
 
@@ -141,6 +146,7 @@ Show mockup and WAIT: "approved" or "change [X]".
 3. If fails: fix before next step
 4. Tests alongside code, not after
 5. After all steps: integration / E2E tests
+6. Before marking complete: self-review using `references/prompts/pr-review.md`
 
 **Loop-back rule:** If implementation reveals a plan problem, STOP and flag it:
 ```
@@ -161,6 +167,7 @@ Never silently deviate from the plan.
 1. Update README, CHANGELOG, architecture docs, AGENTS.md as needed
 2. Add code comments where "why" isn't obvious
 3. For medium+ tasks: read and complete `references/release-readiness-checklist.md`
+4. If user-facing changes: generate release notes using `references/prompts/release-notes.md`
 
 ## Task Decomposition (mega only)
 
