@@ -1,0 +1,99 @@
+{
+  "task": "add-notifications",
+  "description": "Add real-time notification system with email and push channels",
+  "sub_tasks": [
+    {
+      "name": "contracts",
+      "description": "Shared interfaces, DTOs, and entities for the notification system. Defines INotificationService, INotificationChannel, NotificationDto, NotificationEntity, and ChannelType enum.",
+      "size": "small",
+      "layer": "Domain / Application",
+      "scope": [
+        "src/Domain/Notifications/",
+        "src/Application/Notifications/"
+      ],
+      "depends_on": [],
+      "has_ui": false,
+      "acceptance_criteria": [
+        "INotificationService interface defined with Send and GetHistory methods",
+        "INotificationChannel interface defined with Deliver method",
+        "NotificationDto and NotificationEntity created with validation",
+        "ChannelType enum: Email, Push, InApp",
+        "Unit tests for domain validation rules pass"
+      ]
+    },
+    {
+      "name": "email-channel",
+      "description": "Email notification delivery via SMTP. Implements INotificationChannel for email with template support and retry logic.",
+      "size": "medium",
+      "layer": "Infrastructure",
+      "scope": [
+        "src/Infrastructure/Notifications/Email/"
+      ],
+      "depends_on": ["contracts"],
+      "has_ui": false,
+      "acceptance_criteria": [
+        "Implements INotificationChannel for ChannelType.Email",
+        "Sends email via configured SMTP settings",
+        "Supports HTML email templates",
+        "Retry logic for transient SMTP failures",
+        "Integration test with test SMTP server passes"
+      ]
+    },
+    {
+      "name": "push-channel",
+      "description": "Push notification delivery via Firebase Cloud Messaging. Implements INotificationChannel for push with device token management.",
+      "size": "medium",
+      "layer": "Infrastructure",
+      "scope": [
+        "src/Infrastructure/Notifications/Push/"
+      ],
+      "depends_on": ["contracts"],
+      "has_ui": false,
+      "acceptance_criteria": [
+        "Implements INotificationChannel for ChannelType.Push",
+        "Integrates with Firebase Cloud Messaging API",
+        "Device token registration and cleanup",
+        "Integration test with FCM mock passes"
+      ]
+    },
+    {
+      "name": "notification-api",
+      "description": "REST API endpoints for sending notifications and querying notification history. Wires channels via DI.",
+      "size": "medium",
+      "layer": "Application / API",
+      "scope": [
+        "src/Application/Notifications/",
+        "src/API/Controllers/"
+      ],
+      "depends_on": ["contracts"],
+      "has_ui": false,
+      "acceptance_criteria": [
+        "POST /api/notifications endpoint sends to specified channel",
+        "GET /api/notifications/history returns paginated history",
+        "Proper auth on all endpoints",
+        "422 for invalid channel type, 400 for bad input",
+        "Integration tests for all endpoints pass"
+      ]
+    },
+    {
+      "name": "notification-ui",
+      "description": "Notification bell icon with dropdown showing recent notifications. Includes real-time updates via SignalR.",
+      "size": "medium",
+      "layer": "UI / Presentation",
+      "scope": [
+        "src/Web/Components/Notifications/",
+        "src/Web/Hubs/"
+      ],
+      "depends_on": ["contracts", "notification-api"],
+      "has_ui": true,
+      "acceptance_criteria": [
+        "Notification bell component with unread count badge",
+        "Dropdown shows last 20 notifications with timestamps",
+        "Real-time updates via SignalR hub",
+        "Mark as read on click",
+        "Responsive design (mobile + desktop)",
+        "E2E test for notification flow passes"
+      ]
+    }
+  ]
+}

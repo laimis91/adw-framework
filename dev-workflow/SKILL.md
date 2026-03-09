@@ -193,6 +193,21 @@ Integration: [what to test at seams]
 
 ⛔ Approval gate before generating briefs.
 
+**Automation scripts** (in `scripts/` — bash `.sh` + PowerShell `.ps1`):
+- After approval: `./scripts/decompose.sh --task "name" --input decomposition.json`
+  - Creates branches, git worktrees (one per sub-task), and brief files
+  - PowerShell: `.\scripts\Decompose.ps1 -Task "name" -Input decomposition.json`
+- To run agents: `./scripts/run-agents.sh --briefs briefs/ --skip-first --parallel`
+  - Parallel mode uses worktrees so each agent has its own working directory
+  - PowerShell: `.\scripts\Run-Agents.ps1 -BriefsDir briefs -SkipFirst -Parallel`
+- Before integration: `./scripts/check-integration.sh --integration-branch feature/name`
+  - PowerShell: `.\scripts\Check-Integration.ps1 -IntegrationBranch feature/name`
+- After completion: `./scripts/generate-agents-md.sh --format claude` captures project knowledge
+  - Use `--format agents` for Codex, `--format both` for both CLAUDE.md + AGENTS.md
+  - PowerShell: `.\scripts\Generate-AgentsMd.ps1 -Format claude`
+
+All scripts support `-DryRun` / `--dry-run`. Add `--cleanup` / `-Cleanup` to run-agents to auto-remove worktrees after agents finish. See `scripts/example-decomposition.json` for the JSON input format.
+
 **Integration phase** after all sub-tasks:
 1. Merge branches, resolve conflicts
 2. Verify contracts implemented correctly
