@@ -189,7 +189,7 @@ function Invoke-Agent {
     try {
         switch ($Agent) {
             "claude" { & claude -p $briefContent --cwd $AgentCwd *> $logFile }
-            "codex"  { & codex --prompt $briefContent --cwd $AgentCwd *> $logFile }
+            "codex"  { & codex exec $briefContent --cwd $AgentCwd *> $logFile }
         }
         Write-Ok "Agent $Index ($briefName) completed successfully."
         return $true

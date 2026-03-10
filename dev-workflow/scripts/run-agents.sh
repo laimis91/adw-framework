@@ -215,7 +215,7 @@ run_agent() {
             claude -p "$brief_content" --cwd "$agent_cwd" > "$log_file" 2>&1 || exit_code=$?
             ;;
         codex)
-            codex --prompt "$brief_content" --cwd "$agent_cwd" > "$log_file" 2>&1 || exit_code=$?
+            codex exec "$brief_content" --cwd "$agent_cwd" > "$log_file" 2>&1 || exit_code=$?
             ;;
     esac
 

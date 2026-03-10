@@ -375,6 +375,26 @@ if [[ -f "README.md" ]]; then
 fi
 [[ -z "$DESCRIPTION" ]] && DESCRIPTION="TODO: Add project description"
 
+# ── Detect dev-workflow skill ─────────────────────────────────────────────────
+
+WORKFLOW_SECTION=""
+if [[ -f "dev-workflow/SKILL.md" ]]; then
+    WORKFLOW_SECTION="
+## Development Workflow
+
+This project uses the AI-Assisted Development Workflow.
+Follow it for all code changes: Triage → Discover → Plan → [Design] → Build & Test → Document.
+
+See \`dev-workflow/SKILL.md\` for full phases, rules, and approval gates.
+
+Key rules:
+- Never guess — ask before assuming
+- Plan before coding — get approval before implementation
+- One step at a time — build + test after each plan step
+- Flag deviations — stop if reality doesn't match the plan"
+    info "Detected dev-workflow skill — adding workflow section."
+fi
+
 # ── Generate content for a given format ───────────────────────────────────────
 
 generate_content() {
@@ -442,6 +462,7 @@ When working on this project:
 4. **Follow existing patterns** — check nearby files before creating new ones
 5. **No hardcoded secrets** — use configuration / environment variables
 6. **Ask before adding dependencies** — justify new packages
+$WORKFLOW_SECTION
 
 ## Notes
 

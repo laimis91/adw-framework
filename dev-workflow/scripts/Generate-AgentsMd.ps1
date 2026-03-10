@@ -247,6 +247,28 @@ if (Test-Path "README.md") {
     if ($line) { $readmeDesc = $line }
 }
 
+# ── Detect dev-workflow skill ─────────────────────────────────────────────────
+
+$workflowSection = ""
+if (Test-Path "dev-workflow/SKILL.md") {
+    $workflowSection = @"
+
+## Development Workflow
+
+This project uses the AI-Assisted Development Workflow.
+Follow it for all code changes: Triage -> Discover -> Plan -> [Design] -> Build & Test -> Document.
+
+See ``dev-workflow/SKILL.md`` for full phases, rules, and approval gates.
+
+Key rules:
+- Never guess -- ask before assuming
+- Plan before coding -- get approval before implementation
+- One step at a time -- build + test after each plan step
+- Flag deviations -- stop if reality doesn't match the plan
+"@
+    Write-Info "Detected dev-workflow skill -- adding workflow section."
+}
+
 # ── Generate content for a given format ───────────────────────────────────────
 
 function Build-Content {
@@ -312,6 +334,7 @@ When working on this project:
 4. **Follow existing patterns** -- check nearby files before creating new ones
 5. **No hardcoded secrets** -- use configuration / environment variables
 6. **Ask before adding dependencies** -- justify new packages
+$workflowSection
 
 ## Notes
 
