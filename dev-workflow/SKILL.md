@@ -7,7 +7,7 @@ description: "Structured AI-assisted development workflow: triage, discover, pla
 
 Core principle: **never guess silently**. Every task goes through structured phases; approval gates and questioning style depend on task risk, material ambiguity, and explicit user direction.
 
-> **Path note:** All paths in this document are relative to the directory that contains this `SKILL.md`. Use forward slashes in docs and prompts for portability across Windows, Linux, and macOS. Resolve from the skill root first in Claude Code, Codex CLI, or similar agents. Examples: `references/plan-template.md`, `playbooks/dotnet-api.md`, `scripts/decompose.sh`.
+> **Path note:** All paths in this document are relative to the directory that contains this `SKILL.md`. Use forward slashes in docs and prompts for portability across Windows, Linux, and macOS. When used from a CLI agent working at repo root, these paths resolve relative to the directory containing this file (typically dev-workflow/). Examples: `references/plan-template.md`, `playbooks/dotnet-api.md`, `scripts/decompose.sh`.
 
 ## Workflow
 
@@ -23,16 +23,43 @@ Role-based collaboration such as Planner, Reviewer, Tester, or Researcher can be
 
 ## Triage (always do first)
 
-Assess task size. This determines which phases run and how thoroughly.
+Assess task size. This determines which phases run, how thoroughly, and how aggressively to manage context.
 
-| Size | Phases |
-|---|---|
-| **Small** (bugfix, typo, config, one-file) | Discover (quick) → Plan (lightweight) → Build & Test → Document |
-| **Medium** (feature, refactor, endpoint, component) | Discover → Plan → [Design] → Build & Test → Document |
-| **Large** (new project, multi-module, new app) | Discover → Plan → Design → Build & Test → Document |
-| **Mega** (rewrite, platform, 10+ files across layers) | Discover → Decompose → sub-tasks → Integrate → Document |
+| Size | Phases | Context Strategy |
+|---|---|---|
+| **Small** (bugfix, typo, config, one-file) | Discover (quick) → Plan (lightweight) → Build & Test → Document | Minimal: read only the target file(s). Use `rg` for everything else. Skip reference templates. |
+| **Medium** (feature, refactor, endpoint, component) | Discover → Plan → [Design] → Build & Test → Document | Scoped: read touched files fully (≤500 lines). Signatures-only for larger files. Load plan template only. |
+| **Large** (new project, multi-module, new app) | Discover → Plan → Design → Build & Test → Document | Structured: read interfaces/contracts fully. Signatures + structure for implementation files. Load plan template + relevant playbook. |
+| **Mega** (rewrite, platform, 10+ files across layers) | Discover → Decompose → sub-tasks → Integrate → Document | Decomposed: each sub-task gets its own scoped brief and independent context. Never load the whole repo. |
 
 [Design] = include if task has UI work, skip for backend-only.
+
+### Context management rules
+
+Context is finite. Treat it like a budget — every file read is a spend. These rules prevent overflow across all task sizes:
+
+**File reading discipline:**
+- **Never read a file without a reason tied to the task scope.** "It exists" is not a reason.
+- **Files >500 lines:** Read structure first (`rg "class |interface |enum |public .* " file` or equivalent). Only read full method bodies when directly relevant to the change.
+- **Files >2000 lines:** Never read fully. Use targeted search (`rg`, `grep`, line-range reads) to extract only the relevant sections.
+- **If a task brief specifies scope** ("Touch only: X, Y" / "Do NOT touch: Z"): treat unlisted files as search-only. Do not read them fully.
+
+**Phase-based pruning:**
+- **End of Discovery:** Compress findings into a structured summary (≤30 lines). Do not carry raw file contents into Plan phase.
+- **End of Plan:** Carry only the plan steps + file paths + key signatures forward. Drop research context.
+- **During Build & Test:** Hold only the current step's relevant code + build/test output. Do not re-read unchanged files between steps.
+
+**Reference file loading:**
+- Load reference templates and prompt packs **only when the current phase needs them** — not preemptively.
+- For small tasks: skip all reference files. Use inline plan format.
+- For medium tasks: load only `references/plan-template.md`.
+- For large tasks: load plan template + the single most relevant playbook.
+- For mega tasks: each sub-task brief is self-contained. Sub-tasks load references independently.
+
+**Build & Test context checkpoint:**
+- After every **3 build/fix iterations**, self-assess context usage.
+- If context is heavy or the conversation is long: generate a handoff summary using `references/context-handoff-templates.md`, drop accumulated context, and continue from the summary.
+- Track a running "files changed" list instead of re-reading diffs.
 
 ### Size escalation
 
@@ -56,13 +83,23 @@ Decomposition is a planning technique, not a mandatory git strategy. Use branche
 
 **Goal:** Resolve material unknowns before committing to an implementation approach.
 
-1. Read repo: README, `CLAUDE.md` if present, `AGENTS.md` if present, docs/, key files
-2. Compare current state against request
-3. Ask targeted questions with recommendations when material ambiguity remains after repo inspection
-4. Repeat until the task is locked down enough to plan safely
-5. Restate requirements in 1–3 sentences
+1. Read repo: README, `CLAUDE.md` if present, `AGENTS.md` if present — then **stop and assess** what else is needed
+2. Use targeted search (`rg`, `grep`, `git log`) to find relevant code — prefer search over full file reads
+3. Compare current state against request
+4. Ask targeted questions with recommendations when material ambiguity remains after repo inspection
+5. Repeat until the task is locked down enough to plan safely
+6. **Compress:** Restate requirements in 1–3 sentences + list key files and signatures discovered. Drop raw file contents from working memory.
 
 Every task size gets Discovery. Small = quick (often zero questions if unambiguous). Mega = deeper discovery and likely decomposition.
+
+**Discovery reading strategy by size:**
+
+| Size | What to read fully | What to search/skim |
+|---|---|---|
+| **Small** | Target file only | Nothing else needed |
+| **Medium** | Files being changed (≤500 lines each) | Neighboring files via `rg` for signatures, callers, tests |
+| **Large** | Interfaces, contracts, entry points | Implementation files via structure/signatures only |
+| **Mega** | Architecture docs, contracts | Everything else via search — defer detail to sub-task Discovery |
 
 **Suggested Q&A format when explicit Q&A is needed:**
 ```
@@ -95,22 +132,21 @@ Only offer a `defaults` shortcut when the default choices are written out explic
 **Goal:** Concrete, reviewable implementation plan with architecture review built in.
 
 Before creating the plan:
-- Read `references/plan-template.md` and fill it in inline in chat by default
-- Read the relevant `playbooks/*.md` for project-type architecture rules and conventions
+- **Medium+ only:** Read `references/plan-template.md` and fill it in inline in chat by default
+- **Large only:** Also read the single most relevant `playbooks/*.md` for project-type architecture rules
+- **Small tasks:** Use a lightweight inline plan (what files change, risks, what to test) — no templates
 
 Create an in-repo plan artifact only when repo conventions, higher-priority instructions, or the user explicitly require one.
 
-For small tasks, use a lightweight inline plan: what files change, risks, what to test.
-
 **What to do:**
-1. Research codebase: modules, files, entrypoints, patterns
+1. Research codebase: modules, files, entrypoints, patterns — **using search, not full reads** (carry forward Discovery findings, don't re-read)
 2. Evaluate architecture: existing → verify fit; new → recommend (see architecture table below)
 3. Analyze 1–3 options with tradeoffs, pick one
 4. Identify risks and edge cases
 5. Write ordered implementation steps with file paths and test commands
 6. For medium+ tasks: fill in Security and Operability sections from plan template
 7. Read `references/ai-usage-policy.md` and follow its rules throughout
-8. Load prompt packs when applicable:
+8. Load prompt packs **only when applicable** (do not preload all):
    - Security (auth, PII, payments, external inputs): read `references/prompts/threat-model.md`
    - Refactors: read `references/prompts/refactor-safety.md`
    - New code paths: read `references/prompts/test-strategy.md`
@@ -171,6 +207,12 @@ If the design direction is already constrained, show the intended direction conc
 5. After all steps: integration / E2E tests
 6. Before marking complete: self-review using `references/prompts/pr-review.md`
 
+**Context discipline during Build & Test:**
+- Read only the file(s) being changed in the current step. Do not re-read files from previous steps unless debugging a regression.
+- Keep a running log of changes made (file, what changed, ~lines) instead of re-reading diffs.
+- After build/test output: extract only the relevant error/warning lines. Do not paste full build logs if they exceed ~50 lines — summarize and quote key lines.
+- **Every 3 build/fix iterations:** Check if context is growing heavy. If yes, generate a handoff summary (see `references/context-handoff-templates.md`), state what context can be dropped, and continue lean.
+
 **Loop-back rule:** If implementation reveals a material plan problem, assess whether it changes the agreed intent, user-visible behavior, risk profile, or approval boundaries.
 
 If it does, STOP and flag it:
@@ -204,6 +246,7 @@ Read `references/sub-task-brief-template.md` for the brief format.
 - Aim for 3–7 sub-tasks
 - If shared contracts exist, define or stabilize them first
 - Each sub-task should have clear scope, touchpoints, and verification
+- Each sub-task brief must be **self-contained** — include all context the agent needs so it never has to read the whole repo
 - Final Document phase after integration covers all docs
 - Branches/worktrees are optional tactics, not mandatory workflow; respect repo branching policy and required approval checkpoints
 
@@ -262,3 +305,6 @@ Read `references/ai-usage-policy.md` for full policy. Key rules always in effect
 - **No gate:** Do not skip required approval checkpoints. Present the plan and pause whenever risk, scope, or user direction requires it
 - **One mega session:** Decompose tasks that exceed context
 - **Vague contracts:** Define as actual code signatures
+- **Context hoarding:** Never read files "just in case." Every read must serve a specific, immediate purpose
+- **Full-file reads on large files:** Files >500 lines get searched/skimmed first; >2000 lines are never read fully
+- **Re-reading unchanged files:** Use your running change log and Discovery summary instead of re-reading files between Build steps
